@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="author" content="Ignacio Julio Posada, Luis Alejandro Murcia Pimiento, Christian Alejandro Granada Dorado, Emmanuel López Velandia - Subgrupo 9" />
+  <link rel="stylesheet" href="style.css" />
+  <title>Hospital EL POLI | Calidad Humana y Excelencia Médica</title>
+</head>
+
+<body>
+  <header class="navbar">
+    <div class="logo">
+      <a href="/"><strong>Hospital</strong> EL POLI</a>
+    </div>
+    <nav aria-label="Navegación principal">
+      <ul class="nav-links">
+        <li><a href="#inicio">Inicio</a></li>
+        <li><a href="#servicios">Servicios</a></li>
+        <li><a href="#doctores">Especialistas</a></li>
+        <li><a href="#citas">Citas</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+    <div class="auth-buttons">
+      <button class="btn-outline">Iniciar Sesión</button>
+      <button class="btn-primary">Registrarse</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="inicio" class="hero-section">
+      <div class="hero-content">
+        <h1>Su salud es nuestra prioridad</h1>
+        <p>Atención médica especializada con tecnología de vanguardia en el corazón de Bogotá.</p>
+        <div class="hero-actions">
+          <a href="#citas" class="btn-primary">Solicitar Cita Ahora</a>
+          <div id="video-root"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección de servicios del hospital -->
+    <section id="servicios" class="services-section container">
+      <div class="section-header">
+        <!-- La etiqueta h2 define un subtítulo de sección -->
+        <h2>Nuestros Servicios</h2>
+        <p>Contamos con un equipo interdisciplinario para su bienestar.</p>
+      </div>
+
+      <div class="services-grid">
+        <article class="service-card">
+          <div class="icon">
+            <!-- La etiqueta img se usa para insertar una imagen y el atributo src indica la URL de la imagen y alt proporciona un texto por si la imagen no carga -->
+            <img src="https://cdn-icons-png.flaticon.com/512/1098/1098026.png" alt="Medicina General" />
+          </div>
+          <!-- La etiqueta h3 define un subtítulo de tercer nivel -->
+          <h3>Medicina General</h3>
+          <p>Atención integral para toda la familia.</p>
+        </article>
+
+        <article class="service-card active">
+          <div class="icon">
+            <img src="https://cdn-icons-png.flaticon.com/512/3790/3790678.png" alt="Pediatría" />
+          </div>
+          <h3>Pediatría</h3>
+          <p>Cuidado especializado para los más pequeños.</p>
+        </article>
+
+        <article class="service-card">
+          <div class="icon">
+            <img src="https://cdn-icons-png.flaticon.com/512/2894/2894975.png" alt="Urgencias" />
+          </div>
+          <h3>Urgencias 24/7</h3>
+          <p>Respuesta inmediata ante cualquier eventualidad.</p>
+        </article>
+
+        <article class="service-card">
+          <div class="icon">
+            <img src="https://cdn-icons-png.flaticon.com/512/2972/2972531.png" alt="Horarios" />
+          </div>
+          <h3>Horarios</h3>
+          <p>Consulte la disponibilidad de nuestras especialidades.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="doctores" class="container" style="margin-top: 80px;">
+      <div id="especialistas-root"></div>
+    </section>
+
+<!-- Sección de galería de instalaciones del hospital -->
+      <section id="instalaciones" class="gallery-section container">
+        <div class="section-header">
+          <h2>Nuestras Instalaciones</h2>
+        </div>
+        <div class="grid-layout">
+          <!-- La etiqueta figure se usa para representar contenido visual (imágenes, diagramas) junto con su descripción -->
+          <figure class="main-card">
+            <img
+              src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              alt="Instalaciones del Hospital EL POLI"
+              loading="lazy"
+            />
+            <!-- La etiqueta figcaption proporciona una leyenda o descripción para el contenido de figure -->
+            <figcaption>
+              <h3>Infraestructura moderna y segura.</h3>
+              <button class="btn-link">Ver más →</button>
+            </figcaption>
+          </figure>
+          <figure class="side-card">
+            <img
+              src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              alt="Nuestro equipo de especialistas"
+              loading="lazy"
+            />
+            <figcaption>
+              <h3>Profesionales certificados a su disposición.</h3>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+    <section id="citas" class="appointment-section">
+      <div class="section-header">
+        <h2>Solicitar Cita Médica</h2>
+      </div>
+      <form id="cita-form" class="inline-form">
+        <input type="text" name="nombre" placeholder="Nombre completo" required />
+        <input type="email" name="email" placeholder="Correo electrónico" required />
+        <input type="date" name="fecha" required />
+        <button type="submit" class="btn-primary">Enviar Solicitud</button>
+      </form>
+      <div id="confirm-root"></div>
+    </section>
+  </main>
+
+<footer class="main-footer">
+    <div class="container footer-grid">
+      <div class="footer-logo">
+        <p><strong>&copy; 2026 Hospital EL POLI. Proyecto Front-End - Subgrupo 9.</strong></p>
+        <p style="font-size: 0.85rem; margin-top: 8px;">
+          Desarrollado por: Ignacio Julio Posada, Luis Alejandro Murcia Pimiento, <br>
+          Christian Alejandro Granada Dorado y Emmanuel López Velandia.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel" src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": true
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "Hospital-Poli-DB",
+            "connectString": "postgresql://hospital_poli_db_user:P8yE7OzDKo5yNSJWw5FGklRfSpRcyfr4@dpg-d7nug49j2pic73crj940-a.oregon-postgres.render.com/hospital_poli_db"
+        }
+    ]
+}
