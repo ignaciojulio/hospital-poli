@@ -40,7 +40,20 @@ const VideoButton = () => {
 /* --- 2. COMPONENTE CONFIRMACIÓN DE CITAS --- */
 const formatDate = (dateStr) => {
   const [year, month, day] = dateStr.split("-");
-  const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  const months = [
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+  ];
   return `${parseInt(day)} de ${months[parseInt(month) - 1]} de ${year}`;
 };
 
@@ -152,3 +165,9 @@ const renderApp = () => {
 };
 
 renderApp();
+
+const API_URL = 'https://hospital-poli-backend.onrender.com'; // En Producción
+// O en desarrollo:
+// const API_URL = 'http://localhost:3000';
+
+fetch(`${window.API_URL}/api/pacientes`)
