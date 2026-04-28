@@ -39,11 +39,35 @@ export class PacientesAPI {
         body: JSON.stringify(datos),
       });
 
+      // Intentar extraer el cuerpo de la respuesta (error o éxito)
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch {
+        responseData = null;
+      }
+
       if (!response.ok) {
+        // Si la respuesta tiene estructura de errores, construir mensaje descriptivo
+        if (responseData?.errors && Array.isArray(responseData.errors)) {
+          const errorMessages = responseData.errors
+            .map(err => Object.values(err)[0])
+            .join(', ');
+          const error = new Error(errorMessages);
+          error.status = response.status;
+          throw error;
+        }
+        // Si tiene un mensaje genérico
+        if (responseData?.msg) {
+          const error = new Error(responseData.msg);
+          error.status = response.status;
+          throw error;
+        }
+        // Fallback a mensaje genérico
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
-      return await response.json();
+      return responseData;
     } catch (error) {
       console.error('❌ Error en POST /api/pacientes:', error);
       throw error;
