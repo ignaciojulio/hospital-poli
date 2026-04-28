@@ -48,7 +48,15 @@ export class PacientesAPI {
       }
 
       if (!response.ok) {
-        // Si la respuesta tiene estructura de errores, construir mensaje descriptivo
+        // Prioridad 1: Si tiene un mensaje explícito del servidor (error de negocio)
+        if (responseData?.msg) {
+          const error = new Error(responseData.msg);
+          error.status = response.status;
+          error.errorCode = responseData.error_code;
+          throw error;
+        }
+        
+        // Prioridad 2: Si la respuesta tiene estructura de errores de validación
         if (responseData?.errors && Array.isArray(responseData.errors)) {
           const errorMessages = responseData.errors
             .map(err => Object.values(err)[0])
@@ -57,14 +65,19 @@ export class PacientesAPI {
           error.status = response.status;
           throw error;
         }
-        // Si tiene un mensaje genérico
-        if (responseData?.msg) {
-          const error = new Error(responseData.msg);
-          error.status = response.status;
-          throw error;
-        }
-        // Fallback a mensaje genérico
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        
+        // Fallback: mensaje genérico basado en HTTP status
+        const statusMessages = {
+          400: 'Datos inválidos. Por favor revisa tu entrada.',
+          409: 'El correo electrónico ya está registrado.',
+          429: 'Demasiadas solicitudes. Por favor espera unos momentos.',
+          500: 'Error del servidor. Por favor intenta más tarde.',
+        };
+        
+        const errorMsg = statusMessages[response.status] || `Error ${response.status}: ${response.statusText}`;
+        const error = new Error(errorMsg);
+        error.status = response.status;
+        throw error;
       }
 
       return responseData;

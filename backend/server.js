@@ -198,24 +198,36 @@ app.post(
       console.error('Código:', err.code);
       console.error('Stack:', err.stack);
       
-      // Manejo específico de errores conocidos
+      // Manejo específico de errores conocidos (PostgreSQL error codes)
       if (err.code === '23505') {
         // Error de violación de restricción única (email duplicado, etc.)
+        // Código 23505 es "unique_violation"
         return res.status(409).json({ 
-          msg: 'El correo electrónico ya está registrado. Por favor usa otro.' 
+          msg: 'Este correo electrónico ya está registrado en el sistema. Por favor usa otro correo o contacta soporte.',
+          error_code: 'EMAIL_ALREADY_EXISTS'
         });
       }
       
       if (err.code === '23503') {
-        // Error de restricción de clave foránea
+        // Error de restricción de clave foránea (23503 = "foreign_key_violation")
         return res.status(400).json({ 
-          msg: 'Referencia inválida en los datos proporcionados.' 
+          msg: 'Los datos proporcionados referencian información que no existe.',
+          error_code: 'INVALID_REFERENCE'
+        });
+      }
+
+      if (err.code === '22007' || err.code === '22008') {
+        // Error de formato de fecha (22007 = "invalid_datetime_format", 22008 = "datetime_field_overflow")
+        return res.status(400).json({ 
+          msg: 'La fecha proporcionada no es válida. Usa el formato YYYY-MM-DD.',
+          error_code: 'INVALID_DATE'
         });
       }
       
       // Error genérico: devuelve un mensaje apropiado sin filtrar detalles sensibles
       res.status(500).json({ 
-        msg: 'Error al crear la cita. Por favor intenta de nuevo más tarde.' 
+        msg: 'Ocurrió un error interno al procesar tu solicitud. Por favor intenta de nuevo más tarde.',
+        error_code: 'INTERNAL_SERVER_ERROR'
       });
     }
   }
