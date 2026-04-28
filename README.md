@@ -24,15 +24,15 @@ El núcleo del proyecto es un sistema CRUD completo para la gestión de citas m�
 
 ### 📝 **CREATE (Crear)**
 *   **Funcionalidad:** Los usuarios pueden solicitar una nueva cita médica a través de un formulario intuitivo en la página principal.
-*   **Implementación:** El componente `AppointmentForm.jsx` captura los datos del usuario (nombre, email, fecha) y realiza una petición `POST` a `/api/pacientes`. El backend inserta el nuevo registro en la base de datos PostgreSQL.
+*   **Implementación:** El componente `AppointmentForm` (dentro de `script.js`) captura los datos del usuario (nombre, email, fecha) y realiza una petición `POST` a `/api/pacientes`. El backend inserta el nuevo registro en la base de datos PostgreSQL.
 
 ### 📖 **READ (Leer)**
 *   **Funcionalidad:** El personal administrativo puede visualizar una lista completa y actualizada de todas las citas registradas en el sistema.
-*   **Implementación:** El componente `AdminPanel.jsx` utiliza el custom hook `useFetchPacientes` para realizar una petición `GET` a `/api/pacientes` al cargar. Los datos se renderizan en una tabla organizada.
+*   **Implementación:** El componente `AdminPanel` (dentro de `script.js`) utiliza el hook `useFetchPacientes` para realizar una petición `GET` a `/api/pacientes` al cargar. Los datos se renderizan en una tabla organizada.
 
 ### 🔄 **UPDATE (Actualizar)**
 *   **Funcionalidad:** Permite a los administradores cambiar el estado de una cita (de `Pendiente` a `Atendido` o `Cancelado`) y modificar la fecha de la misma.
-*   **Implementación:** Cada fila de la tabla (`AdminTableRow.jsx`) tiene un modo de edición que, al guardar, dispara una petición `PUT` a `/api/pacientes/:id` con los nuevos datos. La interfaz se actualiza en tiempo real.
+*   **Implementación:** Cada fila de la tabla (`AdminTableRow` en `script.js`) tiene un modo de edición que, al guardar, dispara una petición `PUT` a `/api/pacientes/:id` con los nuevos datos. La interfaz se actualiza en tiempo real.
 
 ### 🗑️ **DELETE (Eliminar)**
 *   **Funcionalidad:** Ofrece la capacidad de eliminar permanentemente el registro de una cita, por ejemplo, en caso de cancelación.
@@ -42,7 +42,7 @@ El núcleo del proyecto es un sistema CRUD completo para la gestión de citas m�
 
 ## 🏛️ Arquitectura del Proyecto
 
-El proyecto está diseñado con una clara **separación de responsabilidades** entre el cliente y el servidor, siguiendo un modelo de arquitectura de capas.
+El proyecto está diseñado con una clara **separación de responsabilidades** entre el cliente y el servidor.
 
 *   **Backend (Servidor):**
     *   Construido con **Node.js y Express**, actúa como una API RESTful.
@@ -52,7 +52,7 @@ El proyecto está diseñado con una clara **separación de responsabilidades** e
 *   **Frontend (Cliente):**
     *   Construido con **React (vía CDN)**, es una Single Page Application (SPA) que consume la API del backend.
     *   Se encarga exclusivamente de la capa de presentación: renderizar la interfaz, gestionar el estado de los componentes y ofrecer una experiencia de usuario interactiva.
-    *   El código está modularizado en componentes, hooks, utilidades y constantes para facilitar la mantenibilidad y escalabilidad.
+    *   Para simplificar el despliegue en Render, todo el código JavaScript del frontend se ha unificado en un único archivo (`script.js`) que es transpilado en el navegador por Babel Standalone. Este archivo contiene los componentes de React, los hooks, el cliente de API y las constantes.
 
 ---
 
