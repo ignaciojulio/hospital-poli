@@ -161,11 +161,13 @@ app.get('/api/pacientes', async (req, res) => {
     res.json(result.rows);
   } catch (err) {
     // [🛡️ SEGURIDAD] Loguea el error real para depuración interna.
-    console.error(err.message);
+    console.error('❌ Error en GET /api/pacientes');
+    console.error('Mensaje:', err.message);
+    console.error('Código:', err.code);
     // [🛡️ SEGURIDAD] Envía una respuesta genérica al cliente.
     // NUNCA envíes `err.message` en producción, ya que puede filtrar detalles
     // sensibles sobre la estructura de tu base de datos o tu código.
-    res.status(500).send('Error del Servidor');
+    res.status(500).json({ msg: 'Error al obtener las citas.' });
   }
 });
 
@@ -190,8 +192,31 @@ app.post(
       );
       res.status(201).json(newPaciente.rows[0]);
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Error del Servidor');
+      // [🛡️ SEGURIDAD] Loguea el error completo con stack trace para debugging
+      console.error('❌ Error en POST /api/pacientes:');
+      console.error('Mensaje:', err.message);
+      console.error('Código:', err.code);
+      console.error('Stack:', err.stack);
+      
+      // Manejo específico de errores conocidos
+      if (err.code === '23505') {
+        // Error de violación de restricción única (email duplicado, etc.)
+        return res.status(409).json({ 
+          msg: 'El correo electrónico ya está registrado. Por favor usa otro.' 
+        });
+      }
+      
+      if (err.code === '23503') {
+        // Error de restricción de clave foránea
+        return res.status(400).json({ 
+          msg: 'Referencia inválida en los datos proporcionados.' 
+        });
+      }
+      
+      // Error genérico: devuelve un mensaje apropiado sin filtrar detalles sensibles
+      res.status(500).json({ 
+        msg: 'Error al crear la cita. Por favor intenta de nuevo más tarde.' 
+      });
     }
   }
 );
@@ -221,8 +246,10 @@ app.put(
       }
       res.json(updatedPaciente.rows[0]);
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Error del Servidor');
+      console.error('❌ Error en PUT /api/pacientes/:id');
+      console.error('Mensaje:', err.message);
+      console.error('Código:', err.code);
+      res.status(500).json({ msg: 'Error al actualizar la cita.' });
     }
   }
 );
@@ -243,8 +270,10 @@ app.delete('/api/pacientes/:id', async (req, res) => {
     }
     res.json({ msg: 'Paciente eliminado correctamente' });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Error del Servidor');
+    console.error('❌ Error en DELETE /api/pacientes/:id');
+    console.error('Mensaje:', err.message);
+    console.error('Código:', err.code);
+    res.status(500).json({ msg: 'Error al eliminar la cita.' });
   }
 });
 
