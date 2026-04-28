@@ -50,8 +50,22 @@ export const AppointmentForm = () => {
       // Interpretar el error y proporcionar un mensaje amigable y específico
       let displayError = error.message;
       
-      // Si es un error de email duplicado, ofrecer una solución clara
-      if (error.errorCode === 'EMAIL_ALREADY_EXISTS' || error.status === 409) {
+      // Si es un error de validación (422)
+      if (error.status === 422) {
+        if (error.validationErrors && Array.isArray(error.validationErrors)) {
+          // Agrupar errores por campo
+          displayError = error.validationErrors
+            .map(err => {
+              const field = Object.keys(err)[0];
+              const message = err[field];
+              return `• ${message}`;
+            })
+            .join('\n');
+        }
+        displayError = `❌ Por favor revisa los datos:\n${displayError}`;
+      }
+      // Si es un error de email duplicado
+      else if (error.errorCode === 'EMAIL_ALREADY_EXISTS' || error.status === 409) {
         displayError = `⚠️ ${error.message}`;
       } 
       // Si es un error de validación/datos inválidos
@@ -111,7 +125,11 @@ export const AppointmentForm = () => {
           borderRadius: '4px',
           border: '1px solid #ffeaa7',
           fontSize: '14px',
-          borderLeft: '4px solid #ff9800'
+          borderLeft: '4px solid #ff9800',
+          whiteSpace: 'pre-wrap',
+          wordWrap: 'break-word',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          lineHeight: '1.5'
         }}>
           {error}
         </div>

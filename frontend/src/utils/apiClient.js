@@ -56,13 +56,14 @@ export class PacientesAPI {
           throw error;
         }
         
-        // Prioridad 2: Si la respuesta tiene estructura de errores de validación
+        // Prioridad 2: Si la respuesta tiene estructura de errores de validación (422)
         if (responseData?.errors && Array.isArray(responseData.errors)) {
           const errorMessages = responseData.errors
             .map(err => Object.values(err)[0])
-            .join(', ');
+            .join('\n');
           const error = new Error(errorMessages);
           error.status = response.status;
+          error.validationErrors = responseData.errors;
           throw error;
         }
         
@@ -70,6 +71,7 @@ export class PacientesAPI {
         const statusMessages = {
           400: 'Datos inválidos. Por favor revisa tu entrada.',
           409: 'El correo electrónico ya está registrado.',
+          422: 'Hay errores en los datos. Por favor revisa tu entrada.',
           429: 'Demasiadas solicitudes. Por favor espera unos momentos.',
           500: 'Error del servidor. Por favor intenta más tarde.',
         };
