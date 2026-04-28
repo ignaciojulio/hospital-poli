@@ -32,9 +32,10 @@ if (process.env.NODE_ENV !== 'production') {
 const app = express();
 const PORT = process.env.PORT || 3000; // El puerto se toma de las variables de entorno de Render, o 3000 para desarrollo local.
 
-// [🛡️ SEGURIDAD] Confía en los headers forwarded cuando está detrás de un proxy (Render).
+// [🛡️ SEGURIDAD] Confía en el primer proxy (Render's load balancer).
+// Más seguro que 'true': solo confía en el proxy directo, no en cualquier proxy.
 // Necesario para que express-rate-limit identifique correctamente la IP del cliente.
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 /**
  * Configuración del Pool de Conexiones a PostgreSQL.
