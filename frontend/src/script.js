@@ -1,460 +1,342 @@
 /**
- * LÓGICA FRONT-END HOSPITAL EL POLI
- * Proyecto: Entrega 2, Semana 5 - Subgrupo 9
- * Stack PERN: PostgreSQL + Express + React + Node.js
- * Desarrolladores:
- * - Ignacio Julio Posada
- * - Luis Alejandro Murcia Pimiento
- * - Christian Alejandro Granada Dorado
- * - Emmanuel López Velandia
+ * SCRIPT MONOLÍTICO - HOSPITAL EL POLI
+ * 
+ * Este archivo unifica toda la lógica de la aplicación en un solo lugar
+ * para solucionar problemas de despliegue con módulos en Render.
+ * Contiene constantes, utilidades, el cliente API, hooks y componentes de React.
  */
 
-const { useState, useEffect } = React;
+// Desestructuración de React (disponible globalmente desde el CDN)
+const { useState, useEffect, Fragment } = React;
 
-// ============================================
-// CONFIGURACIÓN API
-// ============================================
-const API_URL = 'https://hospital-poli-backend.onrender.com'; // PRODUCCIÓN
+// =================================================================
+// 1. CONSTANTES
+// =================================================================
 
-/* --- 1. COMPONENTE VIDEO MODAL --- */
-const VideoModal = ({ onClose }) => (
-  <div className="modal-overlay" onClick={onClose}>
-    <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-      <button className="modal-close" onClick={onClose}>✕</button>
-      <h3 className="modal-title">Hospital EL POLI — Conócenos</h3>
-      <iframe
-        className="modal-iframe"
-        src="https://www.youtube.com/embed/tZeR1AGk_Uk?autoplay=1&mute=1"
-        allowFullScreen
-      />
-    </div>
-  </div>
-);
+const API_URL = 'https://hospital-poli-backend.onrender.com';
 
-const VideoButton = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <>
-      <button className="btn-text" onClick={() => setIsOpen(true)}>
-        ▶ Ver video institucional
-      </button>
-      {isOpen && <VideoModal onClose={() => setIsOpen(false)} />}
-    </>
-  );
+const API_ENDPOINTS = {
+  PACIENTES: '/api/pacientes',
+  PACIENTE_BY_ID: (id) => `/api/pacientes/${id}`,
 };
 
-/* --- 2. COMPONENTE CONFIRMACIÓN DE CITAS --- */
-const formatDate = (dateStr) => {
-  const [year, month, day] = dateStr.split("-");
-  const months = [
-    "enero",
-    "febrero",
-    "marzo",
-    "abril",
-    "mayo",
-    "junio",
-    "julio",
-    "agosto",
-    "septiembre",
-    "octubre",
-    "noviembre",
-    "diciembre",
-  ];
-  return `${parseInt(day)} de ${months[parseInt(month) - 1]} de ${year}`;
+const HEADERS = { 'Content-Type': 'application/json' };
+
+const ESPECIALISTAS = [
+  { id: 1, nombre: 'Dr. Carlos Mendoza', especialidad: 'Cardiología' },
+  { id: 2, nombre: 'Dra. Ana López', especialidad: 'Pediatría' },
+  { id: 3, nombre: 'Dr. Luis Ramírez', especialidad: 'Medicina General' },
+  { id: 4, nombre: 'Dra. Marta Silva', especialidad: 'Neurología' }
+];
+
+// =================================================================
+// 2. UTILIDADES
+// =================================================================
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  // Sumar el offset de zona horaria para prevenir que el día cambie por horas UTC
+  const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  return localDate.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-const ConfirmModal = ({ nombre, fecha, onClose }) => (
-  <div className="modal-overlay" onClick={onClose}>
-    <div className="confirm-box" onClick={(e) => e.stopPropagation()}>
-      <div className="confirm-icon">✓</div>
-      <h3 className="confirm-title">¡Solicitud recibida!</h3>
-      <p className="confirm-text">
-        Hola <strong>{nombre}</strong>, cita para el <strong>{formatDate(fecha)}</strong>.
-      </p>
-      <button className="btn-primary confirm-btn" onClick={onClose}>
-        Entendido
-      </button>
-    </div>
-  </div>
-);
+// =================================================================
+// 3. CLIENTE API
+// =================================================================
 
-const AppointmentConfirm = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+class PacientesAPI {
+  static async obtenerPacientes() {
+    try {
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.PACIENTES}`, { method: 'GET' });
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+      return await response.json();
+    } catch (error) {
+      console.error('❌ Error en GET /api/pacientes:', error);
+      throw error;
+    }
+  }
 
-  useEffect(() => {
-    const form = document.getElementById("cita-form");
-    if (!form) return;
+  static async crearPaciente(datos) {
+    try {
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.PACIENTES}`, {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify(datos),
+      });
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+      return await response.json();
+    } catch (error) {
+      console.error('❌ Error en POST /api/pacientes:', error);
+      throw error;
+    }
+  }
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      setLoading(true);
-      setError(null);
+  static async actualizarPaciente(id, datos) {
+    try {
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.PACIENTE_BY_ID(id)}`, {
+        method: 'PUT',
+        headers: HEADERS,
+        body: JSON.stringify(datos),
+      });
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+      return await response.json();
+    } catch (error) {
+      console.error(`❌ Error en PUT /api/pacientes/${id}:`, error);
+      throw error;
+    }
+  }
 
-      const formData = {
-        nombre: form.nombre.value,
-        email: form.email.value,
-        fecha_cita: form.fecha.value,
-      };
+  static async eliminarPaciente(id) {
+    try {
+      const response = await fetch(`${API_URL}${API_ENDPOINTS.PACIENTE_BY_ID(id)}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+      return await response.json();
+    } catch (error) {
+      console.error(`❌ Error en DELETE /api/pacientes/${id}:`, error);
+      throw error;
+    }
+  }
+}
 
-      try {
-        // ========================================
-        // CREATE (C) - Registrar nueva cita
-        // ========================================
-        const response = await fetch(`${API_URL}/api/pacientes`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
+// =================================================================
+// 4. CUSTOM HOOKS
+// =================================================================
 
-        if (!response.ok) throw new Error('Error al registrar cita');
-
-        const result = await response.json();
-        console.log('✓ Cita registrada:', result);
-
-        // Mostrar confirmación
-        setData({ nombre: formData.nombre, fecha: formData.fecha_cita });
-        form.reset();
-      } catch (err) {
-        console.error('✗ Error en registro:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    form.addEventListener("submit", handleSubmit);
-    return () => form.removeEventListener("submit", handleSubmit);
-  }, []);
-
-  return (
-    <>
-      {error && <div style={{color: 'red', padding: '10px', margin: '10px 0'}}>Error: {error}</div>}
-      {data && <ConfirmModal {...data} onClose={() => setData(null)} />}
-    </>
-  );
-};
-
-// ============================================
-// 3. COMPONENTE ESPECIALISTAS
-// ============================================
-const EspecialistasSection = () => {
-  const [visible, setVisible] = useState(false);
-  const especialistas = [
-    { id: 1, nombre: "Dr. Camilo Ruiz", cargo: "Pediatra Principal", dias: ["Lun", "Mie", "Vie"] },
-    { id: 2, nombre: "Dra. Alena Gómez", cargo: "Medicina General", dias: ["Mar", "Jue", "Sab"] },
-    { id: 3, nombre: "Dr. Marco Tulio", cargo: "Cirujano General", dias: ["Lun", "Mar", "Mie", "Jue"] },
-    { id: 4, nombre: "Dr. Carlos José", cargo: "Odontólogo", dias: ["Mar", "Mie", "Jue", "Sab"] }
-  ];
-  const semana = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"];
-
-  return (
-    <div className="specialists-wrapper">
-      <div className="specialists-trigger-card">
-        <button 
-          className={`btn-floating-specialists ${visible ? 'active' : ''}`}
-          onClick={() => setVisible(!visible)}
-        >
-          <span className="icon-circle">{visible ? "✕" : "✚"}</span>
-          {visible ? "Ocultar Lista de Especialistas" : "Ver Especialistas y Disponibilidad"}
-        </button>
-        <p className="trigger-helper-text">
-          Haga clic para conocer a nuestros expertos y sus horarios.
-        </p>
-      </div>
-
-      {visible && (
-        <div className="doctors-grid">
-          {especialistas.map((doc) => (
-            <div key={doc.id} className="doctor-card">
-              <div className="doctor-avatar">
-                {doc.nombre.charAt(4)}
-              </div>
-              <h3>{doc.nombre}</h3>
-              <p className="doctor-role">{doc.cargo}</p>
-              
-              <div className="calendar-container">
-                <small>Disponibilidad</small>
-                <div className="calendar-grid">
-                  {semana.map((dia) => (
-                    <div key={dia} className={`calendar-day ${doc.dias.includes(dia) ? "day-available" : ""}`}>
-                      {dia}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <button 
-                className="btn-outline" 
-                style={{ marginTop: "20px", width: "100%" }} 
-                onClick={() => (window.location.href = "#citas")}
-              >
-                Solicitar Cita
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ============================================
-// 4. COMPONENTE PANEL DE ADMINISTRACIÓN (CRUD)
-// ============================================
-const AdminPanel = () => {
+const useFetchPacientes = () => {
   const [pacientes, setPacientes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [editData, setEditData] = useState({});
-  const [filterStatus, setFilterStatus] = useState('all');
 
-  // ========================================
-  // READ (R) - Cargar lista de pacientes
-  // ========================================
   useEffect(() => {
     const fetchPacientes = async () => {
       try {
-        setLoading(true);
-        const response = await fetch(`${API_URL}/api/pacientes`);
-        if (!response.ok) throw new Error('Error al cargar pacientes');
-        const data = await response.json();
-        console.log('✓ Pacientes cargados:', data);
+        const data = await PacientesAPI.obtenerPacientes();
         setPacientes(data);
       } catch (err) {
-        console.error('✗ Error en READ:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-
     fetchPacientes();
   }, []);
 
-  // ========================================
-  // UPDATE (U) - Actualizar estado/datos
-  // ========================================
-  const handleUpdate = async (id) => {
-    try {
-      const response = await fetch(`${API_URL}/api/pacientes/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editData),
-      });
+  return { pacientes, setPacientes, loading, error };
+};
 
-      if (!response.ok) throw new Error('Error al actualizar paciente');
-
-      const updated = await response.json();
-      console.log('✓ Paciente actualizado:', updated);
-
-      // Actualizar lista en tiempo real
-      setPacientes(pacientes.map(p => p.id === id ? updated : p));
-      setEditingId(null);
-      setEditData({});
-    } catch (err) {
-      console.error('✗ Error en UPDATE:', err);
-      alert('Error: ' + err.message);
-    }
+const usePacientesCRUD = () => {
+  const crearPaciente = async (datos) => {
+    return await PacientesAPI.crearPaciente(datos);
   };
-
-  // ========================================
-  // DELETE (D) - Eliminar paciente
-  // ========================================
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Seguro que deseas eliminar este paciente?')) return;
-
-    try {
-      const response = await fetch(`${API_URL}/api/pacientes/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) throw new Error('Error al eliminar paciente');
-
-      console.log('✓ Paciente eliminado:', id);
-
-      // Actualizar lista en tiempo real
-      setPacientes(pacientes.filter(p => p.id !== id));
-    } catch (err) {
-      console.error('✗ Error en DELETE:', err);
-      alert('Error: ' + err.message);
-    }
+  const actualizarPaciente = async (id, datos) => {
+    return await PacientesAPI.actualizarPaciente(id, datos);
   };
+  const eliminarPaciente = async (id) => {
+    return await PacientesAPI.eliminarPaciente(id);
+  };
+  return { crearPaciente, actualizarPaciente, eliminarPaciente };
+};
 
-  // Filtrar pacientes
-  const pacientesFiltrados = pacientes.filter(p => {
-    if (filterStatus === 'all') return true;
-    return p.estado === filterStatus;
-  });
+// =================================================================
+// 5. COMPONENTES REACT
+// =================================================================
 
-  if (loading) return <div style={{ padding: '20px', textAlign: 'center' }}>Cargando pacientes...</div>;
-  if (error) return <div style={{ padding: '20px', color: 'red' }}>Error: {error}</div>;
-
+// --- Componente: VideoButton ---
+const VideoButton = () => {
+  const [isOpen, setIsOpen] = useState(false);
   return (
-    <div style={{ padding: '20px', backgroundColor: '#f5f5f5', borderRadius: '8px', marginTop: '20px' }}>
-      <h2 style={{ marginBottom: '20px', color: '#333' }}>📋 Panel de Administración - Gestión de Pacientes</h2>
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label>Filtrar por estado: </label>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-          <option value="all">Todos</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="atendido">Atendido</option>
-        </select>
-        <p style={{ fontSize: '0.9em', color: '#666' }}>Total de pacientes: <strong>{pacientesFiltrados.length}</strong></p>
-      </div>
-
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{
-          width: '100%',
-          borderCollapse: 'collapse',
-          backgroundColor: 'white',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}>
-          <thead style={{ backgroundColor: '#007bff', color: 'white' }}>
-            <tr>
-              <th style={{ padding: '12px', textAlign: 'left' }}>ID</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Nombre</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Email</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Fecha Cita</th>
-              <th style={{ padding: '12px', textAlign: 'left' }}>Estado</th>
-              <th style={{ padding: '12px', textAlign: 'center' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pacientesFiltrados.map((paciente) => (
-              <tr key={paciente.id} style={{ borderBottom: '1px solid #ddd' }}>
-                <td style={{ padding: '12px' }}>{paciente.id}</td>
-                <td style={{ padding: '12px' }}>
-                  {editingId === paciente.id ? (
-                    <input
-                      type="text"
-                      value={editData.nombre || paciente.nombre}
-                      onChange={(e) => setEditData({ ...editData, nombre: e.target.value })}
-                    />
-                  ) : (
-                    paciente.nombre
-                  )}
-                </td>
-                <td style={{ padding: '12px' }}>{paciente.email}</td>
-                <td style={{ padding: '12px' }}>
-                  {editingId === paciente.id ? (
-                    <input
-                      type="date"
-                      value={editData.fecha_cita || paciente.fecha_cita}
-                      onChange={(e) => setEditData({ ...editData, fecha_cita: e.target.value })}
-                    />
-                  ) : (
-                    paciente.fecha_cita
-                  )}
-                </td>
-                <td style={{ padding: '12px' }}>
-                  {editingId === paciente.id ? (
-                    <select
-                      value={editData.estado || paciente.estado || 'pendiente'}
-                      onChange={(e) => setEditData({ ...editData, estado: e.target.value })}
-                    >
-                      <option value="pendiente">Pendiente</option>
-                      <option value="atendido">Atendido</option>
-                    </select>
-                  ) : (
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: paciente.estado === 'atendido' ? '#28a745' : '#ffc107',
-                      color: paciente.estado === 'atendido' ? 'white' : '#333',
-                      fontSize: '0.85em',
-                    }}>
-                      {paciente.estado || 'pendiente'}
-                    </span>
-                  )}
-                </td>
-                <td style={{ padding: '12px', textAlign: 'center' }}>
-                  {editingId === paciente.id ? (
-                    <>
-                      <button
-                        onClick={() => handleUpdate(paciente.id)}
-                        style={{
-                          padding: '6px 12px',
-                          marginRight: '5px',
-                          backgroundColor: '#28a745',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        💾 Guardar
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#6c757d',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        ✕ Cancelar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setEditingId(paciente.id);
-                          setEditData({ nombre: paciente.nombre, fecha_cita: paciente.fecha_cita, estado: paciente.estado });
-                        }}
-                        style={{
-                          padding: '6px 12px',
-                          marginRight: '5px',
-                          backgroundColor: '#17a2b8',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        ✔ Atender
-                      </button>
-                      <button
-                        onClick={() => handleDelete(paciente.id)}
-                        style={{
-                          padding: '6px 12px',
-                          backgroundColor: '#dc3545',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        🗑 Borrar
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {pacientesFiltrados.length === 0 && (
-        <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
-          No hay pacientes para mostrar
+    <Fragment>
+      <button className="btn-outline" onClick={() => setIsOpen(true)}>
+        Ver Video Institucional
+      </button>
+      {isOpen && (
+        <div className="modal-overlay" onClick={() => setIsOpen(false)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setIsOpen(false)}>×</button>
+            <h2 className="modal-title">Conoce el Hospital EL POLI</h2>
+            <iframe 
+              className="modal-iframe" 
+              src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+              title="Video Institucional"
+              allowFullScreen
+            ></iframe>
+          </div>
         </div>
       )}
+    </Fragment>
+  );
+};
+
+// --- Componente: AppointmentForm ---
+const AppointmentForm = () => {
+  const [formData, setFormData] = useState({ nombre: '', email: '', fecha_cita: '' });
+  const [showConfirm, setShowConfirm] = useState(false);
+  const { crearPaciente } = usePacientesCRUD();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await crearPaciente(formData);
+      setShowConfirm(true);
+      setFormData({ nombre: '', email: '', fecha_cita: '' });
+      setTimeout(() => setShowConfirm(false), 3000);
+    } catch (error) {
+      alert('Error al agendar cita');
+    }
+  };
+
+  return (
+    <Fragment>
+      <form onSubmit={handleSubmit} className="inline-form">
+        <input type="text" placeholder="Nombre completo" 
+          value={formData.nombre}
+          onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+          required />
+        <input type="email" placeholder="Correo electrónico" 
+          value={formData.email}
+          onChange={(e) => setFormData({...formData, email: e.target.value})}
+          required />
+        <input type="date" 
+          value={formData.fecha_cita}
+          onChange={(e) => setFormData({...formData, fecha_cita: e.target.value})}
+          required />
+        <button type="submit" className="btn-primary">Enviar Solicitud</button>
+      </form>
+      {showConfirm && (
+        <div className="modal-overlay">
+          <div className="confirm-box">
+            <div className="confirm-icon">✓</div>
+            <h3 className="confirm-title">¡Cita Confirmada!</h3>
+            <p>Hemos recibido tu solicitud correctamente.</p>
+          </div>
+        </div>
+      )}
+    </Fragment>
+  );
+};
+
+// --- Componente: EspecialistasSection ---
+const EspecialistasSection = () => {
+  return (
+    <Fragment>
+      <div className="specialists-trigger-card">
+        <h2>Nuestro Equipo Médico</h2>
+        <p className="trigger-helper-text">Contamos con los mejores profesionales para tu salud.</p>
+      </div>
+      <div className="doctors-grid">
+        {ESPECIALISTAS.map(doc => (
+          <div key={doc.id} className="doctor-card">
+            <div className="doctor-avatar">
+              {doc.nombre.charAt(0)}
+            </div>
+            <h3>{doc.nombre}</h3>
+            <p className="doctor-role">{doc.especialidad}</p>
+          </div>
+        ))}
+      </div>
+    </Fragment>
+  );
+};
+
+// --- Componente: AdminTableRow ---
+const AdminTableRow = ({ paciente, onUpdate, onDelete }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    fecha_cita: paciente.fecha_cita ? paciente.fecha_cita.split('T')[0] : '',
+    estado: paciente.estado || 'Pendiente'
+  });
+
+  const handleSave = () => {
+    onUpdate(paciente.id, editData);
+    setIsEditing(false);
+  };
+
+  return (
+    <tr>
+      <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{paciente.nombre}</td>
+      <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{paciente.email}</td>
+      <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>
+        {isEditing ? (
+          <input type="date" value={editData.fecha_cita} onChange={(e) => setEditData({...editData, fecha_cita: e.target.value})} />
+        ) : (
+          paciente.fecha_cita ? paciente.fecha_cita.split('T')[0] : ''
+        )}
+      </td>
+      <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>
+        {isEditing ? (
+          <select value={editData.estado} onChange={(e) => setEditData({...editData, estado: e.target.value})}>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Atendido">Atendido</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+        ) : (
+          <span style={{ padding: '4px 8px', borderRadius: '12px', backgroundColor: paciente.estado === 'Atendido' ? '#d4edda' : '#fff3cd' }}>
+            {paciente.estado}
+          </span>
+        )}
+      </td>
+      <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>
+        {isEditing ? (<button className="btn-primary" onClick={handleSave} style={{ marginRight: '8px' }}>Guardar</button>) 
+                  : (<button className="btn-outline" onClick={() => setIsEditing(true)} style={{ marginRight: '8px' }}>Atender</button>)}
+        <button className="btn-outline" style={{ color: 'red', borderColor: 'red' }} onClick={() => onDelete(paciente.id)}>Borrar</button>
+      </td>
+    </tr>
+  );
+};
+
+// --- Componente: AdminPanel ---
+const AdminPanel = () => {
+  const { pacientes, setPacientes, loading, error } = useFetchPacientes();
+  const { actualizarPaciente, eliminarPaciente } = usePacientesCRUD();
+
+  const handleUpdate = async (id, datos) => {
+    try {
+      const actualizado = await actualizarPaciente(id, datos);
+      setPacientes(pacientes.map(p => p.id === id ? actualizado : p));
+    } catch (err) {
+      alert('Error al actualizar paciente');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro de eliminar este paciente?')) {
+      try {
+        await eliminarPaciente(id);
+        setPacientes(pacientes.filter(p => p.id !== id));
+      } catch (err) {
+        alert('Error al eliminar paciente');
+      }
+    }
+  };
+
+  if (loading) return <div style={{ textAlign: 'center' }}>Cargando pacientes...</div>;
+  if (error) return <div style={{ color: 'red', textAlign: 'center' }}>Error: {error}</div>;
+
+  return (
+    <div style={{ padding: '20px', backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+      <h2 style={{ marginBottom: '20px', color: '#4200ff' }}>Panel de Administración de Citas</h2>
+      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <thead>
+          <tr style={{ backgroundColor: '#f8f9fa' }}>
+            <th style={{ padding: '12px' }}>Nombre</th><th style={{ padding: '12px' }}>Email</th>
+            <th style={{ padding: '12px' }}>Fecha Cita</th><th style={{ padding: '12px' }}>Estado</th>
+            <th style={{ padding: '12px' }}>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pacientes.map(pac => (<AdminTableRow key={pac.id} paciente={pac} onUpdate={handleUpdate} onDelete={handleDelete} />))}
+          {pacientes.length === 0 && (<tr><td colSpan="5" style={{ padding: '20px', textAlign: 'center' }}>No hay pacientes registrados.</td></tr>)}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-// ============================================
-// 5. RENDERIZADO EN EL DOM
-// ============================================
+// =================================================================
+// 6. RENDERIZADO DE LA APLICACIÓN
+// =================================================================
+
 const renderApp = () => {
   const videoRoot = document.getElementById("video-root");
   const confirmRoot = document.getElementById("confirm-root");
@@ -462,9 +344,14 @@ const renderApp = () => {
   const adminRoot = document.getElementById("admin-root");
 
   if (videoRoot) ReactDOM.createRoot(videoRoot).render(<VideoButton />);
-  if (confirmRoot) ReactDOM.createRoot(confirmRoot).render(<AppointmentConfirm />);
+  if (confirmRoot) ReactDOM.createRoot(confirmRoot).render(<AppointmentForm />);
   if (especialistasRoot) ReactDOM.createRoot(especialistasRoot).render(<EspecialistasSection />);
   if (adminRoot) ReactDOM.createRoot(adminRoot).render(<AdminPanel />);
 };
 
-renderApp();
+// Ejecutar cuando el DOM está listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', renderApp);
+} else {
+  renderApp();
+}
